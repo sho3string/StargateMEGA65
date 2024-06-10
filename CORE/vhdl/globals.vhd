@@ -41,10 +41,8 @@ constant QNICE_FIRMWARE           : string  := QNICE_FIRMWARE_M2M;
 -- then add all the clocks speeds here by adding more constants.
 ----------------------------------------------------------------------------------------------------------
 
--- Galaga core's clock speed
--- Actual clock is 18_432 Mhz ( see MAME driver - galaga.cpp ).
--- MiSTer uses 18Mhz
-constant CORE_CLK_SPEED       : natural := 18_000_000;   -- Galaga's main clock is 18 MHz 
+
+constant CORE_CLK_SPEED       : natural := 12_000_000;   -- Stargate's main clock is 12 MHz 
 
 -- System clock speed (crystal that is driving the FPGA) and QNICE clock speed
 -- !!! Do not touch !!!
@@ -58,8 +56,8 @@ constant QNICE_CLK_SPEED      : natural := 50_000_000;   -- a change here has de
 -- Rendering constants (in pixels)
 --    VGA_*   size of the core's target output post scandoubler
 --    FONT_*  size of one OSM character
-constant VGA_DX               : natural := 576;
-constant VGA_DY               : natural := 448;
+constant VGA_DX               : natural := 584;
+constant VGA_DY               : natural := 480;
 constant FONT_FILE            : string  := "../font/Anikki-16x16-m2m.rom";
 constant FONT_DX              : natural := 16;
 constant FONT_DY              : natural := 16;
@@ -143,76 +141,76 @@ constant C_CRTROMS_MAN           : crtrom_buf_array := ( x"EEEE", x"EEEE",
 --               b) Don't forget to zero-terminate each of your substrings of C_CRTROMS_AUTO_NAMES by adding "& ENDSTR;"
 --               c) Don't forget to finish the C_CRTROMS_AUTO array with x"EEEE"
 
-constant C_DEV_BOS_CPU_ROM1           : std_logic_vector(15 downto 0) := x"0100";     -- CPU1 ROM 
-constant C_DEV_BOS_CPU_ROM2           : std_logic_vector(15 downto 0) := x"0101";     -- CPU2 ROM 
-constant C_DEV_BOS_CPU_ROM3           : std_logic_vector(15 downto 0) := x"0102";     -- CPU3 ROM 
-constant C_DEV_BOS_GFX1               : std_logic_vector(15 downto 0) := x"0103";     -- BG GFX
-constant C_DEV_BOS_GFX2               : std_logic_vector(15 downto 0) := x"0104";     -- SPRITE GFX
-constant C_DEV_BOS_GFX3               : std_logic_vector(15 downto 0) := x"0105";     -- RADAR GFX
-constant C_DEV_BOS_SPC1               : std_logic_vector(15 downto 0) := x"0106";     -- Speech 1
-constant C_DEV_BOS_SPC2               : std_logic_vector(15 downto 0) := x"0107";     -- Speech 2
-constant C_DEV_BOS_SPC3               : std_logic_vector(15 downto 0) := x"0108";     -- Speech 3
-constant C_DEV_BOS_MCU1               : std_logic_vector(15 downto 0) := x"0109";     -- MCU1 50xx
-constant C_DEV_BOS_MCU2               : std_logic_vector(15 downto 0) := x"010A";     -- MCU2 51xx
-constant C_DEV_BOS_MCU3               : std_logic_vector(15 downto 0) := x"010B";     -- MCU3 52xx
-constant C_DEV_BOS_MCU4               : std_logic_vector(15 downto 0) := x"010C";     -- MCU4 54xx
-constant C_DEV_BOS_VIDC               : std_logic_vector(15 downto 0) := x"010D";     -- Color
+constant C_DEV_01               : std_logic_vector(15 downto 0) := x"0100";    
+constant C_DEV_02               : std_logic_vector(15 downto 0) := x"0101";     
+constant C_DEV_03               : std_logic_vector(15 downto 0) := x"0102";     
+constant C_DEV_04               : std_logic_vector(15 downto 0) := x"0103";    
+constant C_DEV_05               : std_logic_vector(15 downto 0) := x"0104";   
+constant C_DEV_06               : std_logic_vector(15 downto 0) := x"0105";   
+constant C_DEV_07               : std_logic_vector(15 downto 0) := x"0106";     
+constant C_DEV_08               : std_logic_vector(15 downto 0) := x"0107";     
+constant C_DEV_09               : std_logic_vector(15 downto 0) := x"0108";     
+constant C_DEV_10               : std_logic_vector(15 downto 0) := x"0109";     
+constant C_DEV_11               : std_logic_vector(15 downto 0) := x"010A";    
+constant C_DEV_12               : std_logic_vector(15 downto 0) := x"010B";    
+constant C_DEV_SGSND1           : std_logic_vector(15 downto 0) := x"010C";  
+constant C_DEV_SGSND2           : std_logic_vector(15 downto 0) := x"010D";    
 
--- GALAGA core specific ROMs
-constant ROM1_MAIN_CPU_ROM            : string  := "arcade/bosconian/rom1.rom" & ENDSTR;    -- z80 cpu 1
-constant ROM2_SUB_CPU_ROM             : string  := "arcade/bosconian/rom2.rom" & ENDSTR;    -- z80 sub cpu
-constant ROM3_SND_CPU_ROM             : string  := "arcade/bosconian/rom3.rom" & ENDSTR;    -- z80 snd cpu
-constant GFX1_BG_ROM                  : string  := "arcade/bosconian/gfx1.rom" & ENDSTR;    -- bg layer shapes
-constant GFX2_FG_ROM                  : string  := "arcade/bosconian/gfx2.rom" & ENDSTR;    -- sprite shapes
-constant GFX3_RR_ROM                  : string  := "arcade/bosconian/gfx3.rom" & ENDSTR;    -- radar shapes
-constant SPCH1_ROM                    : string  := "arcade/bosconian/bos1_9.5n" & ENDSTR;   -- speech 1
-constant SPCH2_ROM                    : string  := "arcade/bosconian/bos1_10.5m" & ENDSTR;  -- speech 2
-constant SPCH3_ROM                    : string  := "arcade/bosconian/bos1_11.5k" & ENDSTR;  -- speech 3
-constant NAMCO50XX_MCU_ROM            : string  := "arcade/bosconian/50xx.bin" & ENDSTR;    -- 50xx mcu
-constant NAMCO51XX_MCU_ROM            : string  := "arcade/bosconian/51xx.bin" & ENDSTR;    -- 51xx mcu
-constant NAMCO52XX_MCU_ROM            : string  := "arcade/bosconian/52xx.bin" & ENDSTR;    -- 52xx mcu
-constant NAMCO54XX_MCU_ROM            : string  := "arcade/bosconian/54xx.bin" & ENDSTR;    -- 54xx mcu
-constant VIDC_PROM                    : string  := "arcade/bosconian/bos1-5.4m" & ENDSTR;   -- Color PROM
+constant ROM_01                  : string  := "arcade/stargate/01" & ENDSTR;    
+constant ROM_02                  : string  := "arcade/stargate/02" & ENDSTR;   
+constant ROM_03                  : string  := "arcade/stargate/03" & ENDSTR;    
+constant ROM_04                  : string  := "arcade/stargate/04" & ENDSTR;    
+constant ROM_05                  : string  := "arcade/stargate/05" & ENDSTR;   
+constant ROM_06                  : string  := "arcade/stargate/06" & ENDSTR;   
+constant ROM_07                  : string  := "arcade/stargate/07" & ENDSTR;   
+constant ROM_08                  : string  := "arcade/stargate/08" & ENDSTR;  
+constant ROM_09                  : string  := "arcade/stargate/09" & ENDSTR; 
+constant ROM_10                  : string  := "arcade/stargate/10" & ENDSTR;   
+constant ROM_11                  : string  := "arcade/stargate/11" & ENDSTR;   
+constant ROM_12                  : string  := "arcade/stargate/12" & ENDSTR;    
+constant ROM_SND01               : string  := "arcade/stargate/sg.snd" & ENDSTR;  
+constant ROM_SND02               : string  := "arcade/stargate/sg.snd" & ENDSTR;  
 
 
-constant CPU_ROM1_MAIN_START          : std_logic_vector(15 downto 0) := X"0000";
-constant CPU_ROM2_MAIN_START          : std_logic_vector(15 downto 0) := CPU_ROM1_MAIN_START + ROM1_MAIN_CPU_ROM'length;
-constant CPU_ROM3_MAIN_START          : std_logic_vector(15 downto 0) := CPU_ROM2_MAIN_START + ROM2_SUB_CPU_ROM'length;
-constant GFX1_MAIN_START              : std_logic_vector(15 downto 0) := CPU_ROM3_MAIN_START + ROM3_SND_CPU_ROM'length;
-constant GFX2_MAIN_START              : std_logic_vector(15 downto 0) := GFX1_MAIN_START + GFX1_BG_ROM'length;
-constant GFX3_MAIN_START              : std_logic_vector(15 downto 0) := GFX2_MAIN_START + GFX2_FG_ROM'length;
-constant SPCH1_MAIN_START             : std_logic_vector(15 downto 0) := GFX3_MAIN_START + GFX3_RR_ROM'length;
-constant SPCH2_MAIN_START             : std_logic_vector(15 downto 0) := SPCH1_MAIN_START + SPCH1_ROM'length;
-constant SPCH3_MAIN_START             : std_logic_vector(15 downto 0) := SPCH2_MAIN_START + SPCH2_ROM'length;
-constant MCU1_MAIN_START              : std_logic_vector(15 downto 0) := SPCH3_MAIN_START + SPCH3_ROM'length;
-constant MCU2_MAIN_START              : std_logic_vector(15 downto 0) := MCU1_MAIN_START + NAMCO50XX_MCU_ROM'length;
-constant MCU3_MAIN_START              : std_logic_vector(15 downto 0) := MCU2_MAIN_START + NAMCO51XX_MCU_ROM'length;
-constant MCU4_MAIN_START              : std_logic_vector(15 downto 0) := MCU3_MAIN_START + NAMCO52XX_MCU_ROM'length;
-constant VIDC_MAIN_START              : std_logic_vector(15 downto 0) := MCU4_MAIN_START + NAMCO54XX_MCU_ROM'length;
+constant ROM1_MAIN_START          : std_logic_vector(15 downto 0)  := X"0000";
+constant ROM2_MAIN_START          : std_logic_vector(15 downto 0)  := ROM1_MAIN_START + ROM_01'length;
+constant ROM3_MAIN_START          : std_logic_vector(15 downto 0)  := ROM2_MAIN_START + ROM_02'length;
+constant ROM4_MAIN_START          : std_logic_vector(15 downto 0)  := ROM3_MAIN_START + ROM_03'length;
+constant ROM5_MAIN_START          : std_logic_vector(15 downto 0)  := ROM4_MAIN_START + ROM_04'length;
+constant ROM6_MAIN_START          : std_logic_vector(15 downto 0)  := ROM5_MAIN_START + ROM_05'length;
+constant ROM7_MAIN_START          : std_logic_vector(15 downto 0)  := ROM6_MAIN_START + ROM_06'length;
+constant ROM8_MAIN_START          : std_logic_vector(15 downto 0)  := ROM7_MAIN_START + ROM_07'length;
+constant ROM9_MAIN_START          : std_logic_vector(15 downto 0)  := ROM8_MAIN_START + ROM_08'length;
+constant ROM10_MAIN_START         : std_logic_vector(15 downto 0)  := ROM9_MAIN_START + ROM_09'length;
+constant ROM11_MAIN_START         : std_logic_vector(15 downto 0)  := ROM10_MAIN_START + ROM_10'length;
+constant ROM12_MAIN_START         : std_logic_vector(15 downto 0)  := ROM11_MAIN_START + ROM_11'length;
+constant SND01_MAIN_START         : std_logic_vector(15 downto 0)  := ROM12_MAIN_START + ROM_12'length;
+constant SND02_MAIN_START         : std_logic_vector(15 downto 0)  := SND01_MAIN_START + ROM_SND01'length;
+
+
 
 -- M2M framework constants
 constant C_CRTROMS_AUTO_NUM      : natural := 14;                                       -- Amount of automatically loadable ROMs and carts, if more than 3: also adjust CRTROM_MAN_MAX in M2M/rom/shell_vars.asm, Needs to be in sync with config.vhd. Maximum is 16
-constant C_CRTROMS_AUTO_NAMES    : string  := ROM1_MAIN_CPU_ROM & ROM2_SUB_CPU_ROM & ROM3_SND_CPU_ROM & 
-                                              GFX1_BG_ROM & GFX2_FG_ROM & GFX3_RR_ROM &
-                                              SPCH1_ROM & SPCH2_ROM & SPCH3_ROM &
-                                              NAMCO50XX_MCU_ROM & NAMCO51XX_MCU_ROM & NAMCO52XX_MCU_ROM & NAMCO54XX_MCU_ROM &
-                                              VIDC_PROM &
+constant C_CRTROMS_AUTO_NAMES    : string  := ROM_10 & ROM_11 & ROM_12 &
+                                              ROM_01 & ROM_02 & ROM_03 & ROM_04 & 
+                                              ROM_05 & ROM_06 & ROM_07 & ROM_08 & 
+                                              ROM_09 & ROM_SND01 & ROM_SND02 &
                                               ENDSTR;
 constant C_CRTROMS_AUTO          : crtrom_buf_array := ( 
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_CPU_ROM1, C_CRTROMTYPE_MANDATORY, CPU_ROM1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_CPU_ROM2, C_CRTROMTYPE_MANDATORY, CPU_ROM2_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_CPU_ROM3, C_CRTROMTYPE_MANDATORY, CPU_ROM3_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_GFX1,     C_CRTROMTYPE_MANDATORY, GFX1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_GFX2,     C_CRTROMTYPE_MANDATORY, GFX2_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_GFX3,     C_CRTROMTYPE_MANDATORY, GFX3_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_SPC1,     C_CRTROMTYPE_MANDATORY, SPCH1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_SPC2,     C_CRTROMTYPE_MANDATORY, SPCH2_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_SPC3,     C_CRTROMTYPE_MANDATORY, SPCH3_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_MCU1,     C_CRTROMTYPE_MANDATORY, MCU1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_MCU2,     C_CRTROMTYPE_MANDATORY, MCU2_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_MCU3,     C_CRTROMTYPE_MANDATORY, MCU3_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_MCU4,     C_CRTROMTYPE_MANDATORY, MCU4_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_BOS_VIDC,     C_CRTROMTYPE_MANDATORY, VIDC_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_10,    C_CRTROMTYPE_MANDATORY, ROM10_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_11,    C_CRTROMTYPE_MANDATORY, ROM11_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_12,    C_CRTROMTYPE_MANDATORY, ROM12_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_01,    C_CRTROMTYPE_MANDATORY, ROM1_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_02,    C_CRTROMTYPE_MANDATORY, ROM2_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_03,    C_CRTROMTYPE_MANDATORY, ROM3_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_04,    C_CRTROMTYPE_MANDATORY, ROM4_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_05,    C_CRTROMTYPE_MANDATORY, ROM5_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_06,    C_CRTROMTYPE_MANDATORY, ROM6_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_07,    C_CRTROMTYPE_MANDATORY, ROM7_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_08,    C_CRTROMTYPE_MANDATORY, ROM8_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_09,    C_CRTROMTYPE_MANDATORY, ROM9_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_SGSND1,C_CRTROMTYPE_MANDATORY, SND01_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_SGSND2,C_CRTROMTYPE_MANDATORY, SND02_MAIN_START,
                                                          x"EEEE");                     -- Always finish the array using x"EEEE"
 
 

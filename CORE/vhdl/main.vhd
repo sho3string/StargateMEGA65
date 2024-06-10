@@ -70,7 +70,7 @@ entity main is
       dsw_b_i                 : in  std_logic_vector(7 downto 0);
 
       dn_clk_i                : in  std_logic;
-      dn_addr_i               : in  std_logic_vector(15 downto 0);
+      dn_addr_i               : in  std_logic_vector(16 downto 0);
       dn_data_i               : in  std_logic_vector(7 downto 0);
       dn_wr_i                 : in  std_logic;
 
@@ -89,8 +89,9 @@ signal flip_screen       : std_logic;
 signal flip              : std_logic := '0';
 signal forced_scandoubler: std_logic;
 signal gamma_bus         : std_logic_vector(21 downto 0);
-signal audio             : std_logic_vector(15 downto 0);
-
+signal audio             : std_logic_vector(7 downto 0);
+signal speech            : std_logic_vector(15 downto 0);
+signal audsum            : std_logic_vector(16 downto 0);
 
 -- I/O board button press simulation ( active high )
 -- b[1]: user button
@@ -101,7 +102,7 @@ signal reset             : std_logic  := reset_hard_i or reset_soft_i;
 
 
 -- highscore system
-signal hs_address       : std_logic_vector(15 downto 0);
+signal hs_address       : std_logic_vector(9 downto 0);
 signal hs_data_in       : std_logic_vector(7 downto 0);
 signal hs_data_out      : std_logic_vector(7 downto 0);
 signal hs_write_enable  : std_logic;
@@ -109,6 +110,10 @@ signal hs_write_enable  : std_logic;
 signal hs_pause         : std_logic;
 signal options          : std_logic_vector(1 downto 0);
 signal self_test        : std_logic;
+
+signal blitter_sc2      : std_logic;
+signal sinistar         : std_logic;
+signal sg_state         : std_logic;
 
 constant C_MENU_OSMPAUSE     : natural := 2;
 constant C_MENU_OSMDIM       : natural := 3;
@@ -118,7 +123,7 @@ constant C_MENU_FLIP         : natural := 9;
 constant m65_1             : integer := 56; --Player 1 Start
 constant m65_2             : integer := 59; --Player 2 Start
 constant m65_5             : integer := 16; --Insert coin 1
-constant m65_6             : integer := 19; --Insert coin 2
+constant m65_left_shift    : integer := 15; --Left shift
 
 -- Offer some keyboard controls in addition to Joy 1 Controls
 constant m65_up_crsr       : integer := 73; --Player up
@@ -130,97 +135,210 @@ constant m65_space         : integer := 60; --Fire
 
 -- Pause, credit button & test mode
 constant m65_p             : integer := 41; --Pause button
-constant m65_s             : integer := 13; --Service 1
-constant m65_capslock      : integer := 72; --Service Mode
 constant m65_help          : integer := 67; --Help key
+
+signal   mem_addr : std_logic_vector(15 downto 0);
+signal   mem_do   : std_logic_vector(7 downto 0);
+signal   mem_di   : std_logic_vector(7 downto 0);
+signal   mem_we   : std_logic;
+signal   ramcs    : std_logic;
+signal   ramlb    : std_logic;
+signal   ramub    : std_logic;
+
+signal   ram_do   : std_logic_vector(7 downto 0);
+signal   rom_do   : std_logic_vector(7 downto 0);
+
+signal   lcnt     : unsigned(10 downto 0);
+signal   pcnt     : unsigned(10 downto 0);
+signal   old_clk  : std_logic;
+
+signal   old_vs   : std_logic;
+signal   old_hs   : std_logic;
 
 begin
    
-    audio_left_o(15) <= not audio(15);
-    audio_left_o(14 downto 0) <= signed(audio(14 downto 0));
-    audio_right_o(15) <= not audio(15);
-    audio_right_o(14 downto 0) <= signed(audio(14 downto 0));
-   
+    audsum <= audio & "000000000" or (speech & "0");
+    audio_left_o(15) <= not audio(7);
+    audio_left_o(14 downto 0)  <= "0" & signed(audsum(16 downto 3));
+    audio_right_o(15) <= not audio(7);
+    audio_right_o(14 downto 0) <= "0" & signed(audsum(16 downto 3));
+    
     options(0) <= osm_control_i(C_MENU_OSMPAUSE);
     options(1) <= osm_control_i(C_MENU_OSMDIM);
     flip_screen <= osm_control_i(C_MENU_FLIP);
     
-    -- if pause_cpu is not asserted, it's safe to enter the service/test mode.
-    -- this prevents undesired state of the game when pause_cpu is asserted whilst self_test is enabled.
-    
-    process (clk_main_i)
-        begin
-        if rising_edge(clk_main_i) then
-            if  not pause_cpu then 
-                    self_test <= '1' when not keyboard_n(m65_capslock) else '0';
-            end if;
-  
-        end if;
-    end process;
-
-    i_bosconian : entity work.bosconian
+    mem_do <= ram_do when not ramcs else rom_do;
+   
+    video_ce_o <= pcnt(0);
+   
+    i_soc : entity work.williams_soc
     port map (
     
-    clock_18   => clk_main_i,
-    reset      => reset,
+    clock       => clk_main_i,
+    vgaRed      => video_red_o,
+    vgaGreen    => video_green_o,
+    vgaBlue     => video_blue_o,
+    Hsync       => video_hs_o,
+    Vsync       => video_vs_o,
+    audio_out   => audio,
+    blitter_sc2 => blitter_sc2,
+    sinistar    => sinistar,
+    sg_state    => sg_state,
+    speech_out  => speech,
     
-    video_r    => video_red_o,
-    video_g    => video_green_o,
-    video_b    => video_blue_o,
+    BTN(0)      => reset,
+    BTN(1)      => keyboard_n(m65_5),
+    BTN(2)      => keyboard_n(m65_2),
+    BTN(3)      => keyboard_n(m65_1),
     
-    --video_csync => open,
-    video_hsync_n  => video_hs_o,
-    video_vsync_n  => video_vs_o,
-    video_hblank_n => video_hblank_o,
-    video_vblank_n => video_vblank_o,
+    SIN_FIRE    => keyboard_n(m65_space),
+    SIN_BOMB    => keyboard_n(m65_left_shift),
+    SW          => dsw_a_i,
+    JA          => (others=>'0'),
+    JB          => (others=>'0'),
     
-    audio       => audio,
-    
-    self_test  => self_test,
-    service    => not keyboard_n(m65_s),
-    coin1      => not keyboard_n(m65_5),
-    coin2      => not keyboard_n(m65_6),
-    start1     => not keyboard_n(m65_1),
-    start2     => not keyboard_n(m65_2),
-    up1        => not joy_1_up_n_i or not keyboard_n(m65_up_crsr),
-    down1      => not joy_1_down_n_i or not keyboard_n(m65_vert_crsr),
-    left1      => not joy_1_left_n_i or not keyboard_n(m65_left_crsr),
-    right1     => not joy_1_right_n_i or not keyboard_n(m65_horz_crsr),
-    fire1      => not joy_1_fire_n_i or not keyboard_n(m65_space),
-    -- player 2 joystick is only active in cocktail/table mode.
-    up2        => not joy_2_up_n_i,
-    down2      => not joy_2_down_n_i,
-    left2      => not joy_2_left_n_i,
-    right2     => not joy_2_right_n_i,
-    fire2      => not joy_2_fire_n_i,
-    
-    -- dip a and b are labelled back to front in MiSTer core, hence this workaround.
-    dip_switch_a    => not dsw_b_i,
-    dip_switch_b    => not dsw_a_i,
-    h_offset   => status(27 downto 24),
-    v_offset   => status(31 downto 28),
-    pause      => pause_cpu or pause_i,
+  
+   -- up1        => not joy_1_up_n_i or not keyboard_n(m65_up_crsr),
+    --down1      => not joy_1_down_n_i or not keyboard_n(m65_vert_crsr),
+   -- left1      => not joy_1_left_n_i or not keyboard_n(m65_left_crsr),
+    --right1     => not joy_1_right_n_i or not keyboard_n(m65_horz_crsr),
+   -- fire1      => not joy_1_fire_n_i or not keyboard_n(m65_space),
+ 
    
-    --hs_address => hs_address,
-    --hs_data_out => hs_data_out,
-    --hs_data_in => hs_data_in,
-    --hs_write   => hs_write_enable,
-    
-    -- @TODO: ROM loading. For now we will hardcode the ROMs
-    -- No dynamic ROM loading as of yet
-    dn_clk     => dn_clk_i,
-    dn_addr    => dn_addr_i,
-    dn_data    => dn_data_i,
-    dn_wr      => dn_wr_i
+    MemAdr      => mem_addr,
+    MemDin      => mem_di,
+    MemDout     => mem_do,
+    MemWR       => mem_we,
+    RamCS       => ramcs,
+    RamLB       => ramlb,
+    RamUB       => ramub,
+   
+  
+    pause      => pause_cpu or pause_i,
+    dn_clk_i   => dn_clk_i,     -- use this for rom loading.
+    dl_clock   => clk_main_i,    
+    dl_addr    => dn_addr_i,
+    dl_data    => dn_data_i,
+    dl_wr      => dn_wr_i,
+    dl_upload  => '0'
  );
  
+ process(clk_main_i)  -- 12mhz
+        
+    begin
+        if rising_edge(clk_main_i) then 
+        
+            if pcnt /= "11111111111" then
+                pcnt <= pcnt + 1;
+            end if;
+    
+            old_hs <= video_hs_o;
+            if (not old_hs and video_hs_o) then
+                pcnt <= (others => '0');
+                if lcnt /= "11111111111" then
+                    lcnt <= lcnt + 1;
+                end if;
+    
+                old_vs <= video_vs_o;
+                if (not old_vs and video_vs_o) then
+                    lcnt <= (others => '0');
+                end if;
+            end if;
+    
+            if pcnt(10 downto 1) = 336 then
+                video_hblank_o <= '1';
+            end if;
+            
+            if pcnt(10 downto 1) = 040 then
+                video_hblank_o <= '0';
+            end if;
+    
+            if lcnt = 254 then
+                video_vblank_o <= '1';
+            end if;
+            
+            if lcnt = 14 then
+                video_vblank_o <= '0';
+            end if;
+            
+         end if;
+    end process;
+    
+ 
+  i_ram : entity work.williams_ram
+     port map (
+        CLK    => not clk_main_i,
+        ENL    => not ramlb,
+        ENH    => not ramub,
+        WE     => not ramcs and not mem_we,
+        ADDR   => mem_addr,
+        DI     => mem_di,
+        DO     => ram_do,
+    
+        dn_clock => clk_main_i,
+        dn_addr  => dn_addr_i(15 downto 0),
+        dn_data  => dn_data_i,
+        dn_wr    => dn_wr_i,
+        dn_din   => hs_data_out,
+        dn_nvram => '0'
+     );
+     
+     
+      
+ i_hi : entity work.nvram
+ generic map 
+ (
+    DUMPWIDTH => 10,
+	DUMPINDEX => 4,
+	PAUSEPAD  => 2
+ )
+ port map(
+	
+	reset              => reset,
+	ioctl_upload       => '0', -- to do
+	ioctl_download     => '0', -- to do
+	ioctl_wr           => dn_wr_i,
+	ioctl_addr         => dn_addr_i,
+	ioctl_dout         => dn_data_i,
+	ioctl_index        => (others=>'0'),
+	OSD_STATUS         => '0', -- to do
+	clk                => clk_main_i,
+	paused             => pause_cpu,
+	autosave           => '0',  -- to do
+	nvram_address      => hs_address,
+	nvram_data_out     => hs_data_out,
+	pause_cpu          => hs_pause
+);
+ 
+
+ 
+	cpu_prog_rom : entity work.dualport_2clk_ram
+	generic map 
+    (
+        FALLING_B    => TRUE,
+        ADDR_WIDTH   => 17,
+        DATA_WIDTH   => 8
+    )
+	port map
+	(
+		clock_a   => not clk_main_i,
+		address_a => '0' & mem_addr(15) & (not mem_addr(15) and mem_addr(14)) & mem_addr(13 downto 0),
+		q_a       => rom_do,
+		
+		clock_b   => dn_clk_i,
+		address_b => dn_addr_i,
+		data_b    => dn_data_i,
+		wren_b    => dn_wr_i
+	);
+ 
+    
     i_pause : entity work.pause
      generic map (
      
         RW  => 3,
         GW  => 3,
         BW  => 2,
-        CLKSPD => 18
+        CLKSPD => 12
         
      )         
      port map (

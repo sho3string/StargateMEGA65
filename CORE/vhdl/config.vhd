@@ -76,7 +76,7 @@ type WHS_RECORD_ARRAY_TYPE is array (0 to WHS_RECORDS - 1) of WHS_RECORD_TYPE;
 
 constant SCR_WELCOME : string :=
 
-   "Bosconian V0.5.0 (beta)\n" &
+   "Stargate V0.5.0 (beta)\n" &
    "-----------------------\n" &
    "\n" &
    "MiSTer port done by Muse in 2023\n\n" &
@@ -185,8 +185,8 @@ constant SEL_CFG_FILE      : std_logic_vector(15 downto 0) := x"0101";
 
 -- START YOUR CONFIGURATION BELOW THIS LINE
 
-constant DIR_START         : string := "/arcade/bosconian";
-constant CFG_FILE          : string := "/arcade/bosconian/boscfg";
+constant DIR_START         : string := "/arcade/stargate";
+constant CFG_FILE          : string := "/arcade/stargate/sgcfg";
 
 --------------------------------------------------------------------------------------------------------------------
 -- General configuration settings: Reset, Pause, OSD behavior, Ascal, etc. (Selector 0x0110)
@@ -267,8 +267,8 @@ constant SEL_CORENAME      : std_logic_vector(15 downto 0) := x"0200";
 -- START YOUR CONFIGURATION BELOW THIS LINE
 
 -- Currently this is only used in the debug console. Use the welcome screen and the
--- help system to display the name and version of the Galaga core to the end user
-constant CORENAME          : string := "Galaga V1";
+-- help system to display the name and version of the Stargate core to the end user
+constant CORENAME          : string := "Stargate V1";
 
 --------------------------------------------------------------------------------------------------------------------
 -- "Help" menu / Options menu  (Selectors 0x0300 .. 0x0312): DO NOT TOUCH
@@ -331,7 +331,7 @@ constant OPTM_DX           : natural := 23;
 constant OPTM_DY           : natural := 21;
 
 constant OPTM_ITEMS        : string :=
-   " Bosconian\n"           &
+   " Stargate\n"           &
    "\n"                     &
    " Pause when OSD open\n" &
    " Dim Video after 10s\n" &
