@@ -146,71 +146,34 @@ constant C_DEV_02               : std_logic_vector(15 downto 0) := x"0101";
 constant C_DEV_03               : std_logic_vector(15 downto 0) := x"0102";     
 constant C_DEV_04               : std_logic_vector(15 downto 0) := x"0103";    
 constant C_DEV_05               : std_logic_vector(15 downto 0) := x"0104";   
-constant C_DEV_06               : std_logic_vector(15 downto 0) := x"0105";   
-constant C_DEV_07               : std_logic_vector(15 downto 0) := x"0106";     
-constant C_DEV_08               : std_logic_vector(15 downto 0) := x"0107";     
-constant C_DEV_09               : std_logic_vector(15 downto 0) := x"0108";     
-constant C_DEV_10               : std_logic_vector(15 downto 0) := x"0109";     
-constant C_DEV_11               : std_logic_vector(15 downto 0) := x"010A";    
-constant C_DEV_12               : std_logic_vector(15 downto 0) := x"010B";    
-constant C_DEV_SGSND1           : std_logic_vector(15 downto 0) := x"010C";  
-constant C_DEV_SGSND2           : std_logic_vector(15 downto 0) := x"010D";    
+constant C_DEV_06               : std_logic_vector(15 downto 0) := x"0105";  
 
-constant ROM_01                  : string  := "arcade/stargate/01" & ENDSTR;    
-constant ROM_02                  : string  := "arcade/stargate/02" & ENDSTR;   
-constant ROM_03                  : string  := "arcade/stargate/03" & ENDSTR;    
-constant ROM_04                  : string  := "arcade/stargate/04" & ENDSTR;    
-constant ROM_05                  : string  := "arcade/stargate/05" & ENDSTR;   
-constant ROM_06                  : string  := "arcade/stargate/06" & ENDSTR;   
-constant ROM_07                  : string  := "arcade/stargate/07" & ENDSTR;   
-constant ROM_08                  : string  := "arcade/stargate/08" & ENDSTR;  
-constant ROM_09                  : string  := "arcade/stargate/09" & ENDSTR; 
-constant ROM_10                  : string  := "arcade/stargate/10" & ENDSTR;   
-constant ROM_11                  : string  := "arcade/stargate/11" & ENDSTR;   
-constant ROM_12                  : string  := "arcade/stargate/12" & ENDSTR;    
-constant ROM_SND01               : string  := "arcade/stargate/sg.snd" & ENDSTR;  
-constant ROM_SND02               : string  := "arcade/stargate/sg.snd" & ENDSTR;  
-
+constant ROM_01                  : string  := "arcade/stargate/rom1v2.rom"& ENDSTR;    
+constant ROM_SND                 : string  := "arcade/stargate/sound.snd" & ENDSTR;
+constant ROM_NVR1                : string  := "arcade/stargate/nvram.bin" & ENDSTR;
+constant ROM_NVR2                : string  := "arcade/stargate/nvram.bin" & ENDSTR;   
+constant ROM_DCDR1               : string  := "arcade/stargate/decoder.4" & ENDSTR;
+constant ROM_DCDR2               : string  := "arcade/stargate/decoder.5" & ENDSTR; 
 
 constant ROM1_MAIN_START          : std_logic_vector(15 downto 0)  := X"0000";
-constant ROM2_MAIN_START          : std_logic_vector(15 downto 0)  := ROM1_MAIN_START + ROM_01'length;
-constant ROM3_MAIN_START          : std_logic_vector(15 downto 0)  := ROM2_MAIN_START + ROM_02'length;
-constant ROM4_MAIN_START          : std_logic_vector(15 downto 0)  := ROM3_MAIN_START + ROM_03'length;
-constant ROM5_MAIN_START          : std_logic_vector(15 downto 0)  := ROM4_MAIN_START + ROM_04'length;
-constant ROM6_MAIN_START          : std_logic_vector(15 downto 0)  := ROM5_MAIN_START + ROM_05'length;
-constant ROM7_MAIN_START          : std_logic_vector(15 downto 0)  := ROM6_MAIN_START + ROM_06'length;
-constant ROM8_MAIN_START          : std_logic_vector(15 downto 0)  := ROM7_MAIN_START + ROM_07'length;
-constant ROM9_MAIN_START          : std_logic_vector(15 downto 0)  := ROM8_MAIN_START + ROM_08'length;
-constant ROM10_MAIN_START         : std_logic_vector(15 downto 0)  := ROM9_MAIN_START + ROM_09'length;
-constant ROM11_MAIN_START         : std_logic_vector(15 downto 0)  := ROM10_MAIN_START + ROM_10'length;
-constant ROM12_MAIN_START         : std_logic_vector(15 downto 0)  := ROM11_MAIN_START + ROM_11'length;
-constant SND01_MAIN_START         : std_logic_vector(15 downto 0)  := ROM12_MAIN_START + ROM_12'length;
-constant SND02_MAIN_START         : std_logic_vector(15 downto 0)  := SND01_MAIN_START + ROM_SND01'length;
-
+constant SND_MAIN_START           : std_logic_vector(15 downto 0)  := ROM1_MAIN_START  + ROM_01'length;
+constant NVR1_MAIN_START          : std_logic_vector(15 downto 0)  := SND_MAIN_START   + ROM_SND'length;
+constant NVR2_MAIN_START          : std_logic_vector(15 downto 0)  := NVR1_MAIN_START  + ROM_NVR1'length;
+constant DCDR1_MAIN_START         : std_logic_vector(15 downto 0)  := NVR2_MAIN_START  + ROM_NVR2'length;
+constant DCDR2_MAIN_START         : std_logic_vector(15 downto 0)  := DCDR1_MAIN_START + ROM_DCDR1'length;
 
 
 -- M2M framework constants
-constant C_CRTROMS_AUTO_NUM      : natural := 14;                                       -- Amount of automatically loadable ROMs and carts, if more than 3: also adjust CRTROM_MAN_MAX in M2M/rom/shell_vars.asm, Needs to be in sync with config.vhd. Maximum is 16
-constant C_CRTROMS_AUTO_NAMES    : string  := ROM_10 & ROM_11 & ROM_12 &
-                                              ROM_01 & ROM_02 & ROM_03 & ROM_04 & 
-                                              ROM_05 & ROM_06 & ROM_07 & ROM_08 & 
-                                              ROM_09 & ROM_SND01 & ROM_SND02 &
+constant C_CRTROMS_AUTO_NUM      : natural := 6;                                       -- Amount of automatically loadable ROMs and carts, if more than 3: also adjust CRTROM_MAN_MAX in M2M/rom/shell_vars.asm, Needs to be in sync with config.vhd. Maximum is 16
+constant C_CRTROMS_AUTO_NAMES    : string  := ROM_01 & ROM_SND & ROM_NVR1 & ROM_NVR2 & ROM_DCDR1 & ROM_DCDR2 &
                                               ENDSTR;
 constant C_CRTROMS_AUTO          : crtrom_buf_array := ( 
-      C_CRTROMTYPE_DEVICE, C_DEV_10,    C_CRTROMTYPE_MANDATORY, ROM10_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_11,    C_CRTROMTYPE_MANDATORY, ROM11_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_12,    C_CRTROMTYPE_MANDATORY, ROM12_MAIN_START,
       C_CRTROMTYPE_DEVICE, C_DEV_01,    C_CRTROMTYPE_MANDATORY, ROM1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_02,    C_CRTROMTYPE_MANDATORY, ROM2_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_03,    C_CRTROMTYPE_MANDATORY, ROM3_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_04,    C_CRTROMTYPE_MANDATORY, ROM4_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_05,    C_CRTROMTYPE_MANDATORY, ROM5_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_06,    C_CRTROMTYPE_MANDATORY, ROM6_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_07,    C_CRTROMTYPE_MANDATORY, ROM7_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_08,    C_CRTROMTYPE_MANDATORY, ROM8_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_09,    C_CRTROMTYPE_MANDATORY, ROM9_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_SGSND1,C_CRTROMTYPE_MANDATORY, SND01_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_SGSND2,C_CRTROMTYPE_MANDATORY, SND02_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_02,    C_CRTROMTYPE_MANDATORY, SND_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_03,    C_CRTROMTYPE_MANDATORY, NVR1_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_04,    C_CRTROMTYPE_MANDATORY, NVR2_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_05,    C_CRTROMTYPE_MANDATORY, DCDR1_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_06,    C_CRTROMTYPE_MANDATORY, DCDR2_MAIN_START,
                                                          x"EEEE");                     -- Always finish the array using x"EEEE"
 
 

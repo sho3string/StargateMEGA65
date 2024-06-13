@@ -431,41 +431,7 @@ begin
 
        end if;
     end process;
-    /*
     
-    process (video_clk) -- 48 MHz
-    begin
-        if rising_edge(video_clk) then
-            video_ce       <= '0';
-            video_ce_ovl_o <= '0';
-
-            div <= std_logic_vector(unsigned(div) + 1);
-            if div="000" then
-               video_ce <= '1'; -- 6 MHz
-            end if;
-            if div(0) = '1' then
-               video_ce_ovl_o <= '1'; -- 24 MHz
-            end if;
-
-            if dim_video = '1' then
-                video_red   <= "0" & main_video_red   & main_video_red   & main_video_red(2 downto 2);
-                video_green <= "0" & main_video_green & main_video_green & main_video_green(2 downto 2);
-                video_blue  <= "0" & main_video_blue  & main_video_blue  & main_video_blue & main_video_blue(1 downto 1);  
-            else
-                video_red   <= main_video_red   & main_video_red   & main_video_red(2 downto 1);
-                video_green <= main_video_green & main_video_green & main_video_green(2 downto 1);
-                video_blue  <= main_video_blue  & main_video_blue  & main_video_blue & main_video_blue;
-                
-            end if;
-
-            video_hs     <= not main_video_hs;
-            video_vs     <= not main_video_vs;
-            video_hblank <= not main_video_hblank;
-            video_vblank <= not main_video_vblank;
-            video_de     <= not (main_video_hblank or main_video_vblank);
-        end if;
-    end process;
-    */
    ---------------------------------------------------------------------------------------------
    -- Audio and video settings (QNICE clock domain)
    ---------------------------------------------------------------------------------------------
@@ -530,86 +496,48 @@ begin
       qnice_dn_addr    <= (others => '0');
       qnice_dn_data    <= (others => '0');
       
-      
-      -- 
-      --snd_rom_we  <= '1' when dl_wr = '1' and dl_addr(16 downto 12)  = x"C" else '0'; -- 0C000-0CFFF
-      --spch_rom_we <= '1' when dl_wr = '1' and dl_addr(16 downto 12) >= x"E" else '0'; -- 0E000-11FFF
-    
 
       case qnice_dev_id_i is
 
          -- stargate ROM
-         /*when C_DEV_01 =>
+         
+         -- 0 to 1011111111111111
+         when C_DEV_01 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "00" & qnice_dev_addr_i(13 downto 0);   
+              qnice_dn_addr <= qnice_dev_addr_i(16 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-
+              
+         --snd_rom_we  <= '1' when dl_wr = '1' and dl_addr(16 downto 12)  = x"C" else '0'; -- 0C000-0CFFF
+         
+         -- 1100000000000000 to  1100111111111111
          when C_DEV_02 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
+              qnice_dn_addr <= "01100" & qnice_dev_addr_i(11 downto 0);   
+              qnice_dn_data <= qnice_dev_data_i(7 downto 0);    
               
+         -- nvram
          when C_DEV_03 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
+              qnice_dn_addr(15 downto 0) <= "110011" & qnice_dev_addr_i(9 downto 0);   
+              qnice_dn_data <= qnice_dev_data_i(7 downto 0);         
          
+         -- nvram
          when C_DEV_04 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
+              qnice_dn_addr(15 downto 0) <= "110100" & qnice_dev_addr_i(9 downto 0);   
+              qnice_dn_data <= qnice_dev_data_i(7 downto 0);      
+         
+         -- decoders
          when C_DEV_05 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
+              qnice_dn_addr(16 downto 0) <= "01101010" & qnice_dev_addr_i(8 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);
               
          when C_DEV_06 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
+              qnice_dn_addr(16 downto 0) <= "01101011" & qnice_dev_addr_i(8 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_07 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_08 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_09 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_10 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_11 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_12 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-         
-         when C_DEV_SGSND1 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-         when C_DEV_SGSND2 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr <= "010" & qnice_dev_addr_i(12 downto 0);  
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
-              
-              */
+
 
          when others => null;
       end case;

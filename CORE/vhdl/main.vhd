@@ -85,7 +85,6 @@ architecture synthesis of main is
 signal keyboard_n        : std_logic_vector(79 downto 0);
 signal pause_cpu         : std_logic;
 signal status            : signed(31 downto 0);
-signal flip_screen       : std_logic;
 signal flip              : std_logic := '0';
 signal forced_scandoubler: std_logic;
 signal gamma_bus         : std_logic_vector(21 downto 0);
@@ -115,9 +114,9 @@ signal blitter_sc2      : std_logic;
 signal sinistar         : std_logic;
 signal sg_state         : std_logic;
 
-constant C_MENU_OSMPAUSE     : natural := 2;
-constant C_MENU_OSMDIM       : natural := 3;
-constant C_MENU_FLIP         : natural := 9;
+constant C_MENU_OSMPAUSE   : natural := 2;
+constant C_MENU_OSMDIM     : natural := 3;
+constant C_MENU_FLIP       : natural := 9;
 
 -- Game player inputs
 constant m65_1             : integer := 56; --Player 1 Start
@@ -155,9 +154,13 @@ signal   old_clk  : std_logic;
 signal   old_vs   : std_logic;
 signal   old_hs   : std_logic;
 
+signal   ioctl_upload     : std_logic;
+signal   ioctl_upload_req : std_logic;
+
 begin
    
-    audsum <= audio & "000000000" or (speech & "0");
+   -- audsum <= audio & "000000000" or (speech & "0");
+    audsum <= std_logic_vector(unsigned(audio & "00000000") + unsigned(speech & "0")); -- Zero-extend and concatenate audio and speech
     audio_left_o(15) <= not audio(7);
     audio_left_o(14 downto 0)  <= "0" & signed(audsum(16 downto 3));
     audio_right_o(15) <= not audio(7);
@@ -165,7 +168,7 @@ begin
     
     options(0) <= osm_control_i(C_MENU_OSMPAUSE);
     options(1) <= osm_control_i(C_MENU_OSMDIM);
-    flip_screen <= osm_control_i(C_MENU_FLIP);
+    flip       <= osm_control_i(C_MENU_FLIP);
     
     mem_do <= ram_do when not ramcs else rom_do;
    
@@ -186,6 +189,11 @@ begin
     sg_state    => sg_state,
     speech_out  => speech,
     
+    -- .BTN         ( {BTN[2:0],reset} ),
+    -- BTN = { m_start2, m_start1, m_coin1 };
+	--			JA  = ~{ m_fire_f, m_up, m_down, (status[7:6]==2'b10)? m_fire_e : (status[6] ? (sg_state ? m_right : m_left) : (m_left | m_right)), m_fire_d, m_fire_c, status[6] ? (sg_state ? m_left : m_right) : m_fire_b, m_fire_a };
+	--			JB  = JA;
+	
     BTN(0)      => reset,
     BTN(1)      => keyboard_n(m65_5),
     BTN(2)      => keyboard_n(m65_2),
@@ -215,12 +223,11 @@ begin
    
   
     pause      => pause_cpu or pause_i,
-    dn_clk_i   => dn_clk_i,     -- use this for rom loading.
-    dl_clock   => clk_main_i,    
+    dl_clock   => dn_clk_i,    
     dl_addr    => dn_addr_i,
     dl_data    => dn_data_i,
     dl_wr      => dn_wr_i,
-    dl_upload  => '0'
+    dl_upload  => ioctl_upload
  );
  
  process(clk_main_i)  -- 12mhz
@@ -275,7 +282,7 @@ begin
         DI     => mem_di,
         DO     => ram_do,
     
-        dn_clock => clk_main_i,
+        dn_clock => dn_clk_i,
         dn_addr  => dn_addr_i(15 downto 0),
         dn_data  => dn_data_i,
         dn_wr    => dn_wr_i,
