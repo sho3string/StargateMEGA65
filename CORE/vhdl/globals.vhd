@@ -143,37 +143,34 @@ constant C_CRTROMS_MAN           : crtrom_buf_array := ( x"EEEE", x"EEEE",
 
 constant C_DEV_01               : std_logic_vector(15 downto 0) := x"0100";    
 constant C_DEV_02               : std_logic_vector(15 downto 0) := x"0101";     
-constant C_DEV_03               : std_logic_vector(15 downto 0) := x"0102";     
-constant C_DEV_04               : std_logic_vector(15 downto 0) := x"0103";    
-constant C_DEV_05               : std_logic_vector(15 downto 0) := x"0104";   
-constant C_DEV_06               : std_logic_vector(15 downto 0) := x"0105";  
+constant C_DEV_03               : std_logic_vector(15 downto 0) := x"0102";
+constant C_DEV_04               : std_logic_vector(15 downto 0) := x"0103";
+constant C_DEV_05               : std_logic_vector(15 downto 0) := x"0104";    
 
-constant ROM_01                  : string  := "arcade/stargate/rom1v2.rom"& ENDSTR;    
+constant ROM_01                  : string  := "arcade/stargate/game.rom"  & ENDSTR;    
 constant ROM_SND                 : string  := "arcade/stargate/sound.snd" & ENDSTR;
-constant ROM_NVR1                : string  := "arcade/stargate/nvram.bin" & ENDSTR;
-constant ROM_NVR2                : string  := "arcade/stargate/nvram.bin" & ENDSTR;   
+constant ROM_NVR                 : string  := "arcade/stargate/nvram.bin" & ENDSTR;  
 constant ROM_DCDR1               : string  := "arcade/stargate/decoder.4" & ENDSTR;
 constant ROM_DCDR2               : string  := "arcade/stargate/decoder.5" & ENDSTR; 
 
 constant ROM1_MAIN_START          : std_logic_vector(15 downto 0)  := X"0000";
 constant SND_MAIN_START           : std_logic_vector(15 downto 0)  := ROM1_MAIN_START  + ROM_01'length;
-constant NVR1_MAIN_START          : std_logic_vector(15 downto 0)  := SND_MAIN_START   + ROM_SND'length;
-constant NVR2_MAIN_START          : std_logic_vector(15 downto 0)  := NVR1_MAIN_START  + ROM_NVR1'length;
-constant DCDR1_MAIN_START         : std_logic_vector(15 downto 0)  := NVR2_MAIN_START  + ROM_NVR2'length;
+constant NVR_MAIN_START           : std_logic_vector(15 downto 0)  := SND_MAIN_START   + ROM_SND'length;
+constant DCDR1_MAIN_START         : std_logic_vector(15 downto 0)  := NVR_MAIN_START   + ROM_NVR'length;
 constant DCDR2_MAIN_START         : std_logic_vector(15 downto 0)  := DCDR1_MAIN_START + ROM_DCDR1'length;
 
 
 -- M2M framework constants
-constant C_CRTROMS_AUTO_NUM      : natural := 6;                                       -- Amount of automatically loadable ROMs and carts, if more than 3: also adjust CRTROM_MAN_MAX in M2M/rom/shell_vars.asm, Needs to be in sync with config.vhd. Maximum is 16
-constant C_CRTROMS_AUTO_NAMES    : string  := ROM_01 & ROM_SND & ROM_NVR1 & ROM_NVR2 & ROM_DCDR1 & ROM_DCDR2 &
+constant C_CRTROMS_AUTO_NUM      : natural := 5;                                       -- Amount of automatically loadable ROMs and carts, if more than 3: also adjust CRTROM_MAN_MAX in M2M/rom/shell_vars.asm, Needs to be in sync with config.vhd. Maximum is 16
+constant C_CRTROMS_AUTO_NAMES    : string  := ROM_01 & ROM_SND & ROM_NVR & ROM_DCDR1 & ROM_DCDR2 &
                                               ENDSTR;
+                                              
 constant C_CRTROMS_AUTO          : crtrom_buf_array := ( 
       C_CRTROMTYPE_DEVICE, C_DEV_01,    C_CRTROMTYPE_MANDATORY, ROM1_MAIN_START,
       C_CRTROMTYPE_DEVICE, C_DEV_02,    C_CRTROMTYPE_MANDATORY, SND_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_03,    C_CRTROMTYPE_MANDATORY, NVR1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_04,    C_CRTROMTYPE_MANDATORY, NVR2_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_05,    C_CRTROMTYPE_MANDATORY, DCDR1_MAIN_START,
-      C_CRTROMTYPE_DEVICE, C_DEV_06,    C_CRTROMTYPE_MANDATORY, DCDR2_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_03,    C_CRTROMTYPE_MANDATORY, NVR_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_04,    C_CRTROMTYPE_MANDATORY, DCDR1_MAIN_START,
+      C_CRTROMTYPE_DEVICE, C_DEV_05,    C_CRTROMTYPE_MANDATORY, DCDR2_MAIN_START,
                                                          x"EEEE");                     -- Always finish the array using x"EEEE"
 
 

@@ -268,12 +268,14 @@ signal qnice_dn_wr      : std_logic;
 signal ce_vid         : std_logic;
 signal old_clk        : std_logic;
 
+signal ioctl_download : std_logic := '0';
+
 begin
 
    -- Configure the LEDs:
    -- Power led on and green, drive led always off
    main_power_led_o       <= '1';
-   main_power_led_col_o   <= x"00FF00";
+   --main_power_led_col_o   <= x"00FF00";
    main_drive_led_o       <= '0';
    main_drive_led_col_o   <= x"00FF00"; 
 
@@ -358,6 +360,9 @@ begin
          pause_i              => main_pause_core_i and main_osm_control_i(C_MENU_OSMPAUSE),
          dim_video_o          => dim_video,
          clk_main_speed_i     => CORE_CLK_SPEED,
+         
+         ioctl_download       => ioctl_download,
+         qnice_dev_id_i       => qnice_dev_id_i,
          
          -- Video output
          -- This is PAL 720x576 @ 50 Hz (pixel clock 27 MHz), but synchronized to main_clk (54 MHz).
@@ -496,44 +501,43 @@ begin
       qnice_dn_addr    <= (others => '0');
       qnice_dn_data    <= (others => '0');
       
+      
+      if qnice_dev_id_i <  x"0100" then 
+        ioctl_download <= '0';
+        main_power_led_col_o   <= x"00FF00";
+      else
+        ioctl_download <= '1';
+        main_power_led_col_o   <= x"FF0000";
+      end if;
+      
 
       case qnice_dev_id_i is
 
-         -- stargate ROM
-         
-         -- 0 to 1011111111111111
+         -- stargate game ROM
          when C_DEV_01 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
               qnice_dn_addr <= qnice_dev_addr_i(16 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);
               
-         --snd_rom_we  <= '1' when dl_wr = '1' and dl_addr(16 downto 12)  = x"C" else '0'; -- 0C000-0CFFF
-         
-         -- 1100000000000000 to  1100111111111111
+         -- sound rom
          when C_DEV_02 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
               qnice_dn_addr <= "01100" & qnice_dev_addr_i(11 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);    
-              
+         
          -- nvram
          when C_DEV_03 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
-              qnice_dn_addr(15 downto 0) <= "110011" & qnice_dev_addr_i(9 downto 0);   
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);         
-         
-         -- nvram
-         when C_DEV_04 =>
-              qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
               qnice_dn_addr(15 downto 0) <= "110100" & qnice_dev_addr_i(9 downto 0);   
-              qnice_dn_data <= qnice_dev_data_i(7 downto 0);      
-         
+              qnice_dn_data <= qnice_dev_data_i(7 downto 0);
+                  
          -- decoders
-         when C_DEV_05 =>
+         when C_DEV_04 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
               qnice_dn_addr(16 downto 0) <= "01101010" & qnice_dev_addr_i(8 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);
               
-         when C_DEV_06 =>
+         when C_DEV_05 =>
               qnice_dn_wr   <= qnice_dev_ce_i and qnice_dev_we_i;
               qnice_dn_addr(16 downto 0) <= "01101011" & qnice_dev_addr_i(8 downto 0);   
               qnice_dn_data <= qnice_dev_data_i(7 downto 0);

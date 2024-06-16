@@ -23,11 +23,15 @@ entity main is
       reset_hard_i            : in  std_logic;
       pause_i                 : in  std_logic;
       dim_video_o             : out std_logic;
+      
+      ioctl_download          : in  std_logic;
+      qnice_dev_id_i          : in  std_logic_vector(15 downto 0);
+
 
       -- MiSTer core main clock speed:
       -- Make sure you pass very exact numbers here, because they are used for avoiding clock drift at derived clocks
       clk_main_speed_i        : in  natural;
-
+      
       -- Video output
       video_ce_o              : out std_logic;
       video_ce_ovl_o          : out std_logic;
@@ -84,7 +88,6 @@ architecture synthesis of main is
 
 signal keyboard_n        : std_logic_vector(79 downto 0);
 signal pause_cpu         : std_logic;
-signal status            : signed(31 downto 0);
 signal flip              : std_logic := '0';
 signal forced_scandoubler: std_logic;
 signal gamma_bus         : std_logic_vector(21 downto 0);
@@ -97,7 +100,7 @@ signal audsum            : std_logic_vector(16 downto 0);
 -- b[0]: osd button
 
 signal buttons           : std_logic_vector(1 downto 0);
-signal reset             : std_logic  := reset_hard_i or reset_soft_i;
+signal reset             : std_logic  := reset_hard_i or reset_soft_i or ioctl_download;
 
 
 -- highscore system
@@ -110,8 +113,8 @@ signal hs_pause         : std_logic;
 signal options          : std_logic_vector(1 downto 0);
 signal self_test        : std_logic;
 
-signal blitter_sc2      : std_logic;
-signal sinistar         : std_logic;
+signal blitter_sc2      : std_logic := '0';
+signal sinistar         : std_logic := '0';
 signal sg_state         : std_logic;
 
 constant C_MENU_OSMPAUSE   : natural := 2;
@@ -129,8 +132,11 @@ constant m65_up_crsr       : integer := 73; --Player up
 constant m65_vert_crsr     : integer := 7;  --Player down
 constant m65_left_crsr     : integer := 74; --Player left
 constant m65_horz_crsr     : integer := 2;  --Player right
-constant m65_space         : integer := 60; --Fire
-
+constant m65_space         : integer := 60; --Smart Bomb
+constant m65_mega          : integer := 61; --Fire
+constant m65_ctrl          : integer := 58;
+constant m65_z             : integer := 12;
+constant m65_x             : integer := 23;
 
 -- Pause, credit button & test mode
 constant m65_p             : integer := 41; --Pause button
@@ -157,10 +163,27 @@ signal   old_hs   : std_logic;
 signal   ioctl_upload     : std_logic;
 signal   ioctl_upload_req : std_logic;
 
+signal   JA       : std_logic_vector(7 downto 0);
+
+signal m_fire_f   : std_logic;
+signal m_up       : std_logic;
+signal m_down     : std_logic;
+signal m_fire_e   : std_logic;
+signal m_right    : std_logic;
+signal m_left     : std_logic;
+signal m_fire_d   : std_logic;
+signal m_fire_c   : std_logic;
+signal m_fire_b   : std_logic;
+signal m_fire_a   : std_logic;
+
+signal condition4 : std_logic;
+signal condition7 : std_logic;
+signal ioctl_addr : std_logic_vector(15 downto 0);
+signal dn_nvram   : std_logic := '0';
+
 begin
    
-   -- audsum <= audio & "000000000" or (speech & "0");
-    audsum <= std_logic_vector(unsigned(audio & "00000000") + unsigned(speech & "0")); -- Zero-extend and concatenate audio and speech
+    audsum <= std_logic_vector(unsigned(audio & "00000000") + unsigned(speech & "0"));
     audio_left_o(15) <= not audio(7);
     audio_left_o(14 downto 0)  <= "0" & signed(audsum(16 downto 3));
     audio_right_o(15) <= not audio(7);
@@ -171,8 +194,30 @@ begin
     flip       <= osm_control_i(C_MENU_FLIP);
     
     mem_do <= ram_do when not ramcs else rom_do;
-   
+    
     video_ce_o <= pcnt(0);
+    
+    m_fire_f   <= keyboard_n(m65_z);           -- Inviso
+    m_up       <= keyboard_n(m65_up_crsr);     -- Up
+    m_down     <= keyboard_n(m65_vert_crsr);   -- Down   
+    m_fire_e   <= keyboard_n(m65_ctrl);        -- Reverse
+    m_right    <= keyboard_n(m65_horz_crsr);   -- Right
+    m_left     <= keyboard_n(m65_left_crsr);   -- Left
+    m_fire_d   <= keyboard_n(m65_x);           -- Hyperspace
+    m_fire_c   <= keyboard_n(m65_space);       -- Smart bomb
+    m_fire_b   <= keyboard_n(m65_left_shift);  -- Thrust
+    m_fire_a   <= keyboard_n(m65_mega);        -- Fire 
+    
+    process(m_fire_e, m_right, m_left, sg_state)
+    begin
+        if sg_state = '1' then
+                condition4 <= m_right;  -- turn right condition
+                condition7 <= m_left;   
+        else
+                condition4 <= m_left;   -- turn left condition
+                condition7 <= m_right;
+        end if;
+    end process;
    
     i_soc : entity work.williams_soc
     port map (
@@ -188,22 +233,18 @@ begin
     sinistar    => sinistar,
     sg_state    => sg_state,
     speech_out  => speech,
-    
-    -- .BTN         ( {BTN[2:0],reset} ),
-    -- BTN = { m_start2, m_start1, m_coin1 };
-	--			JA  = ~{ m_fire_f, m_up, m_down, (status[7:6]==2'b10)? m_fire_e : (status[6] ? (sg_state ? m_right : m_left) : (m_left | m_right)), m_fire_d, m_fire_c, status[6] ? (sg_state ? m_left : m_right) : m_fire_b, m_fire_a };
-	--			JB  = JA;
 	
-    BTN(0)      => reset,
-    BTN(1)      => keyboard_n(m65_5),
-    BTN(2)      => keyboard_n(m65_2),
-    BTN(3)      => keyboard_n(m65_1),
+	BTN         => keyboard_n(m65_2) & keyboard_n(m65_1) & keyboard_n(m65_5) & reset,
+    SIN_FIRE    => '0',
+    SIN_BOMB    => '0',
+    SW          => (others=>'0'),
+ 
+    -- MiSTer alternate
+    JA          => m_fire_f & m_up & m_down & condition4 & m_fire_d & m_fire_c & condition7 & m_fire_a,
+    -- MAME configuration
+    --JA          => m_fire_f & m_up & m_down & m_fire_e & m_fire_d & m_fire_c & m_fire_b & m_fire_a,
+    JB          => m_fire_f & m_up & m_down & condition4 & m_fire_d & m_fire_c & condition7 & m_fire_a,
     
-    SIN_FIRE    => keyboard_n(m65_space),
-    SIN_BOMB    => keyboard_n(m65_left_shift),
-    SW          => dsw_a_i,
-    JA          => (others=>'0'),
-    JB          => (others=>'0'),
     
   
    -- up1        => not joy_1_up_n_i or not keyboard_n(m65_up_crsr),
@@ -226,8 +267,8 @@ begin
     dl_clock   => dn_clk_i,    
     dl_addr    => dn_addr_i,
     dl_data    => dn_data_i,
-    dl_wr      => dn_wr_i,
-    dl_upload  => ioctl_upload
+    dl_wr      => dn_wr_i and ioctl_download,
+    dl_upload  => '0'
  );
  
  process(clk_main_i)  -- 12mhz
@@ -271,7 +312,19 @@ begin
          end if;
     end process;
     
- 
+    process(dn_clk_i)
+    begin
+        if falling_edge(dn_clk_i) then 
+            if qnice_dev_id_i =  x"0101" then
+                dn_nvram <= '1';
+            else
+                dn_nvram <= '0';
+            end if;
+            ioctl_addr <= dn_addr_i(15 downto 0) when ioctl_download = '1' else ("000000" & hs_address);
+        end if;  
+    end process;
+    
+    
   i_ram : entity work.williams_ram
      port map (
         CLK    => not clk_main_i,
@@ -283,11 +336,11 @@ begin
         DO     => ram_do,
     
         dn_clock => dn_clk_i,
-        dn_addr  => dn_addr_i(15 downto 0),
+        dn_addr  => ioctl_addr,
         dn_data  => dn_data_i,
-        dn_wr    => dn_wr_i,
+        dn_wr    => dn_wr_i and ioctl_download,
         dn_din   => hs_data_out,
-        dn_nvram => '0'
+        dn_nvram => dn_nvram
      );
      
      
@@ -303,7 +356,7 @@ begin
 	
 	reset              => reset,
 	ioctl_upload       => '0', -- to do
-	ioctl_download     => '0', -- to do
+	ioctl_download     => ioctl_download,
 	ioctl_wr           => dn_wr_i,
 	ioctl_addr         => dn_addr_i,
 	ioctl_dout         => dn_data_i,
@@ -311,7 +364,7 @@ begin
 	OSD_STATUS         => '0', -- to do
 	clk                => clk_main_i,
 	paused             => pause_cpu,
-	autosave           => '0',  -- to do
+	autosave           => '1',  -- to do
 	nvram_address      => hs_address,
 	nvram_data_out     => hs_data_out,
 	pause_cpu          => hs_pause
@@ -333,9 +386,9 @@ begin
 		q_a       => rom_do,
 		
 		clock_b   => dn_clk_i,
-		address_b => dn_addr_i,
+		address_b => dn_addr_i(16 downto 0),
 		data_b    => dn_data_i,
-		wren_b    => dn_wr_i
+		wren_b    => dn_wr_i and ioctl_download
 	);
  
     
