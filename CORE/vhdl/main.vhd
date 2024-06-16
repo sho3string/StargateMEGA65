@@ -120,6 +120,7 @@ signal sg_state         : std_logic;
 constant C_MENU_OSMPAUSE   : natural := 2;
 constant C_MENU_OSMDIM     : natural := 3;
 constant C_MENU_FLIP       : natural := 9;
+constant C_MENU_CTRL_MODE  : natural := 30;
 
 -- Game player inputs
 constant m65_1             : integer := 56; --Player 1 Start
@@ -163,8 +164,6 @@ signal   old_hs   : std_logic;
 signal   ioctl_upload     : std_logic;
 signal   ioctl_upload_req : std_logic;
 
-signal   JA       : std_logic_vector(7 downto 0);
-
 signal m_fire_f   : std_logic;
 signal m_up       : std_logic;
 signal m_down     : std_logic;
@@ -175,6 +174,8 @@ signal m_fire_d   : std_logic;
 signal m_fire_c   : std_logic;
 signal m_fire_b   : std_logic;
 signal m_fire_a   : std_logic;
+signal JA         : std_logic_vector(7 downto 0);
+signal JB         : std_logic_vector(7 downto 0);
 
 signal condition4 : std_logic;
 signal condition7 : std_logic;
@@ -195,18 +196,18 @@ begin
     
     mem_do <= ram_do when not ramcs else rom_do;
     
-    video_ce_o <= pcnt(0);
+    video_ce_o <= pcnt(0); -- 6mhz pixel clock
     
-    m_fire_f   <= keyboard_n(m65_z);           -- Inviso
-    m_up       <= keyboard_n(m65_up_crsr);     -- Up
-    m_down     <= keyboard_n(m65_vert_crsr);   -- Down   
-    m_fire_e   <= keyboard_n(m65_ctrl);        -- Reverse
-    m_right    <= keyboard_n(m65_horz_crsr);   -- Right
-    m_left     <= keyboard_n(m65_left_crsr);   -- Left
-    m_fire_d   <= keyboard_n(m65_x);           -- Hyperspace
-    m_fire_c   <= keyboard_n(m65_space);       -- Smart bomb
-    m_fire_b   <= keyboard_n(m65_left_shift);  -- Thrust
-    m_fire_a   <= keyboard_n(m65_mega);        -- Fire 
+    m_fire_f   <= keyboard_n(m65_z);                            -- Inviso
+    m_up       <= keyboard_n(m65_up_crsr) and joy_1_up_n_i;     -- Up
+    m_down     <= keyboard_n(m65_vert_crsr) and joy_1_down_n_i; -- Down   
+    m_fire_e   <= keyboard_n(m65_ctrl);                         -- Reverse
+    m_right    <= keyboard_n(m65_horz_crsr) and joy_1_right_n_i;-- Right
+    m_left     <= keyboard_n(m65_left_crsr) and joy_1_left_n_i; -- Left
+    m_fire_d   <= keyboard_n(m65_x);                            -- Hyperspace
+    m_fire_c   <= keyboard_n(m65_space);                        -- Smart bomb
+    m_fire_b   <= keyboard_n(m65_left_shift);                   -- Thrust
+    m_fire_a   <= keyboard_n(m65_mega) and joy_1_fire_n_i;      -- Fire 
     
     process(m_fire_e, m_right, m_left, sg_state)
     begin
@@ -216,6 +217,17 @@ begin
         else
                 condition4 <= m_left;   -- turn left condition
                 condition7 <= m_right;
+        end if;
+    end process;
+    
+    process(clk_main_i)
+    begin 
+        if rising_edge(clk_main_i) then
+            if osm_control_i(C_MENU_CTRL_MODE) = '0' then
+                JA <= m_fire_f & m_up & m_down & m_fire_e & m_fire_d & m_fire_c & m_fire_b & m_fire_a;      -- Mode 1 controls
+            else
+                JA <= m_fire_f & m_up & m_down & condition4 & m_fire_d & m_fire_c & condition7 & m_fire_a;  -- Mode 2 controls
+            end if;
         end if;
     end process;
    
@@ -233,27 +245,12 @@ begin
     sinistar    => sinistar,
     sg_state    => sg_state,
     speech_out  => speech,
-	
 	BTN         => keyboard_n(m65_2) & keyboard_n(m65_1) & keyboard_n(m65_5) & reset,
     SIN_FIRE    => '0',
     SIN_BOMB    => '0',
     SW          => (others=>'0'),
- 
-    -- MiSTer alternate
-    JA          => m_fire_f & m_up & m_down & condition4 & m_fire_d & m_fire_c & condition7 & m_fire_a,
-    -- MAME configuration
-    --JA          => m_fire_f & m_up & m_down & m_fire_e & m_fire_d & m_fire_c & m_fire_b & m_fire_a,
-    JB          => m_fire_f & m_up & m_down & condition4 & m_fire_d & m_fire_c & condition7 & m_fire_a,
-    
-    
-  
-   -- up1        => not joy_1_up_n_i or not keyboard_n(m65_up_crsr),
-    --down1      => not joy_1_down_n_i or not keyboard_n(m65_vert_crsr),
-   -- left1      => not joy_1_left_n_i or not keyboard_n(m65_left_crsr),
-    --right1     => not joy_1_right_n_i or not keyboard_n(m65_horz_crsr),
-   -- fire1      => not joy_1_fire_n_i or not keyboard_n(m65_space),
- 
-   
+    JA          => JA,
+    JB          => JB,
     MemAdr      => mem_addr,
     MemDin      => mem_di,
     MemDout     => mem_do,
@@ -261,8 +258,6 @@ begin
     RamCS       => ramcs,
     RamLB       => ramlb,
     RamUB       => ramub,
-   
-  
     pause      => pause_cpu or pause_i,
     dl_clock   => dn_clk_i,    
     dl_addr    => dn_addr_i,
@@ -271,6 +266,7 @@ begin
     dl_upload  => '0'
  );
  
+ -- generate video blanking and pixel clock signals
  process(clk_main_i)  -- 12mhz
         
     begin
@@ -355,7 +351,7 @@ begin
  port map(
 	
 	reset              => reset,
-	ioctl_upload       => '0', -- to do
+	ioctl_upload       => '0', -- to do later
 	ioctl_download     => ioctl_download,
 	ioctl_wr           => dn_wr_i,
 	ioctl_addr         => dn_addr_i,
@@ -364,7 +360,7 @@ begin
 	OSD_STATUS         => '0', -- to do
 	clk                => clk_main_i,
 	paused             => pause_cpu,
-	autosave           => '1',  -- to do
+	autosave           => '1',  -- to do later
 	nvram_address      => hs_address,
 	nvram_data_out     => hs_data_out,
 	pause_cpu          => hs_pause

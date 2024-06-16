@@ -147,17 +147,17 @@ constant C_DEV_03               : std_logic_vector(15 downto 0) := x"0102";
 constant C_DEV_04               : std_logic_vector(15 downto 0) := x"0103";
 constant C_DEV_05               : std_logic_vector(15 downto 0) := x"0104";    
 
-constant ROM_01                  : string  := "arcade/stargate/game.rom"  & ENDSTR;    
-constant ROM_SND                 : string  := "arcade/stargate/sound.snd" & ENDSTR;
-constant ROM_NVR                 : string  := "arcade/stargate/nvram.bin" & ENDSTR;  
-constant ROM_DCDR1               : string  := "arcade/stargate/decoder.4" & ENDSTR;
-constant ROM_DCDR2               : string  := "arcade/stargate/decoder.5" & ENDSTR; 
+constant ROM_01                 : string  := "arcade/stargate/game.rom"  & ENDSTR;    
+constant ROM_SND                : string  := "arcade/stargate/sound.snd" & ENDSTR;
+constant ROM_NVR                : string  := "arcade/stargate/nvram.bin" & ENDSTR;  
+constant ROM_DCDR1              : string  := "arcade/stargate/decoder.4" & ENDSTR;
+constant ROM_DCDR2              : string  := "arcade/stargate/decoder.5" & ENDSTR; 
 
-constant ROM1_MAIN_START          : std_logic_vector(15 downto 0)  := X"0000";
-constant SND_MAIN_START           : std_logic_vector(15 downto 0)  := ROM1_MAIN_START  + ROM_01'length;
-constant NVR_MAIN_START           : std_logic_vector(15 downto 0)  := SND_MAIN_START   + ROM_SND'length;
-constant DCDR1_MAIN_START         : std_logic_vector(15 downto 0)  := NVR_MAIN_START   + ROM_NVR'length;
-constant DCDR2_MAIN_START         : std_logic_vector(15 downto 0)  := DCDR1_MAIN_START + ROM_DCDR1'length;
+constant ROM1_MAIN_START        : std_logic_vector(15 downto 0)  := X"0000";
+constant SND_MAIN_START         : std_logic_vector(15 downto 0)  := ROM1_MAIN_START  + ROM_01'length;
+constant NVR_MAIN_START         : std_logic_vector(15 downto 0)  := SND_MAIN_START   + ROM_SND'length;
+constant DCDR1_MAIN_START       : std_logic_vector(15 downto 0)  := NVR_MAIN_START   + ROM_NVR'length;
+constant DCDR2_MAIN_START       : std_logic_vector(15 downto 0)  := DCDR1_MAIN_START + ROM_DCDR1'length;
 
 
 -- M2M framework constants

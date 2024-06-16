@@ -24,8 +24,8 @@ port (
    RESET_M2M_N             : in  std_logic;              -- Debounced system reset in system clock domain
 
    -- Share clock and reset with the framework
-   main_clk_o              : out std_logic;              -- Galaga's 18 MHz main clock
-   main_rst_o              : out std_logic;              -- Galaga's reset, synchronized
+   main_clk_o              : out std_logic;              -- 12 Mhz
+   main_rst_o              : out std_logic;              
    
    video_clk_o             : out std_logic;              -- video clock 48 MHz
    video_rst_o             : out std_logic;              -- video reset, synchronized
@@ -165,7 +165,6 @@ signal video_rst           : std_logic;
 -- main_clk (MiSTer core's clock)
 ---------------------------------------------------------------------------------------------
 
--- Unprocessed video output from the Galaga core
 signal main_video_red      : std_logic_vector(2 downto 0);   
 signal main_video_green    : std_logic_vector(2 downto 0);
 signal main_video_blue     : std_logic_vector(1 downto 0);
@@ -173,10 +172,6 @@ signal main_video_vs       : std_logic;
 signal main_video_hs       : std_logic;
 signal main_video_hblank   : std_logic;
 signal main_video_vblank   : std_logic;
-
----------------------------------------------------------------------------------------------
--- qnice_clk
----------------------------------------------------------------------------------------------
 
 constant C_MENU_OSMPAUSE      : natural := 2;  
 constant C_MENU_OSMDIM        : natural := 3;
@@ -186,59 +181,10 @@ constant C_MENU_HDMI_16_9_50  : natural := 12;
 constant C_MENU_HDMI_16_9_60  : natural := 13;
 constant C_MENU_HDMI_4_3_50   : natural := 14;
 constant C_MENU_HDMI_5_4_50   : natural := 15;
-
 constant C_MENU_VGA_STD       : natural := 21;
 constant C_MENU_VGA_15KHZHSVS : natural := 25;
 constant C_MENU_VGA_15KHZCS   : natural := 26;
 
-constant C_MENU_MIDWAY        : natural := 32;
-constant C_MENU_NAMCO         : natural := 33;
-
--- Midway DIPs
--- Dipswitch B
-constant C_MENU_MIDWAY_DSWB_0 : natural := 38;
-constant C_MENU_MIDWAY_DSWB_1 : natural := 39;
-constant C_MENU_MIDWAY_DSWB_2 : natural := 40;
-constant C_MENU_MIDWAY_DSWB_3 : natural := 41;
-constant C_MENU_MIDWAY_DSWB_4 : natural := 42;
-constant C_MENU_MIDWAY_DSWB_5 : natural := 43;
-constant C_MENU_MIDWAY_DSWB_6 : natural := 44;
-constant C_MENU_MIDWAY_DSWB_7 : natural := 45;
-
--- Dipswitch A
-constant C_MENU_MIDWAY_DSWA_0 : natural := 47;
-constant C_MENU_MIDWAY_DSWA_1 : natural := 48;
-constant C_MENU_MIDWAY_DSWA_2 : natural := 49;
-constant C_MENU_MIDWAY_DSWA_3 : natural := 50;
-constant C_MENU_MIDWAY_DSWA_4 : natural := 51;
-constant C_MENU_MIDWAY_DSWA_5 : natural := 52;
-constant C_MENU_MIDWAY_DSWA_6 : natural := 53;
-constant C_MENU_MIDWAY_DSWA_7 : natural := 54;
-
-
--- Namco DIPs
--- Dipswitch B
-constant C_MENU_NAMCO_DSWB_0  : natural := 60;
-constant C_MENU_NAMCO_DSWB_1  : natural := 61;
-constant C_MENU_NAMCO_DSWB_2  : natural := 62;
-constant C_MENU_NAMCO_DSWB_3  : natural := 63;
-constant C_MENU_NAMCO_DSWB_4  : natural := 64;
-constant C_MENU_NAMCO_DSWB_5  : natural := 65;
-constant C_MENU_NAMCO_DSWB_6  : natural := 66;
-constant C_MENU_NAMCO_DSWB_7  : natural := 67;
-
--- Dipswitch A
-constant C_MENU_NAMCO_DSWA_0  : natural := 69;
-constant C_MENU_NAMCO_DSWA_1  : natural := 70;
-constant C_MENU_NAMCO_DSWA_2  : natural := 71;
-constant C_MENU_NAMCO_DSWA_3  : natural := 72;
-constant C_MENU_NAMCO_DSWA_4  : natural := 73;
-constant C_MENU_NAMCO_DSWA_5  : natural := 74;
-constant C_MENU_NAMCO_DSWA_6  : natural := 75;
-constant C_MENU_NAMCO_DSWA_7  : natural := 76;
-
-
--- Galaga specific video processing
 signal div          : std_logic_vector(2 downto 0);
 signal dim_video    : std_logic;
 signal dsw_a_i      : std_logic_vector(7 downto 0);
@@ -259,11 +205,9 @@ signal ddram_data       : std_logic_vector(63 downto 0);
 signal ddram_be         : std_logic_vector( 7 downto 0);
 signal ddram_we         : std_logic;
 
--- ROM devices for Galaga
 signal qnice_dn_addr    : std_logic_vector(16 downto 0);
 signal qnice_dn_data    : std_logic_vector(7 downto 0);
 signal qnice_dn_wr      : std_logic;
-
 
 signal ce_vid         : std_logic;
 signal old_clk        : std_logic;
@@ -285,15 +229,14 @@ begin
          sys_clk_i         => CLK,             -- expects 100 MHz
          sys_rstn_i        => RESET_M2M_N,     -- Asynchronous, asserted low
          
-         main_clk_o        => main_clk,        -- Galaga's 12 MHz main clock
-         main_rst_o        => main_rst,        -- Galaga's reset, synchronized
+         main_clk_o        => main_clk,        -- 12 MHz main clock
+         main_rst_o        => main_rst,        -- reset, synchronized
          
          video_clk_o       => video_clk,       -- video clock 48 MHz
          video_rst_o       => video_rst        -- video reset, synchronized
       
-      ); -- clk_gen
+      );
       
- 
    main_clk_o       <= main_clk;
    main_rst_o       <= main_rst;
    video_clk_o      <= video_clk;
@@ -306,43 +249,6 @@ begin
    video_hblank_o   <= video_hblank;
    video_vblank_o   <= video_vblank;
 
-   dsw_a_i <= main_osm_control_i(C_MENU_MIDWAY_DSWA_7) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_6) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_5) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_4) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_3) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_2) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_1) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWA_0)  when main_osm_control_i(C_MENU_MIDWAY) = '1' else
-                    
-              main_osm_control_i(C_MENU_NAMCO_DSWA_7) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_6) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_5) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_4) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_3) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_2) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_1) &
-              main_osm_control_i(C_MENU_NAMCO_DSWA_0);       
-   
-  dsw_b_i <=  main_osm_control_i(C_MENU_MIDWAY_DSWB_7) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_6) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_5) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_4) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_3) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_2) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_1) &
-              main_osm_control_i(C_MENU_MIDWAY_DSWB_0)  when main_osm_control_i(C_MENU_MIDWAY) = '1' else
-                    
-              main_osm_control_i(C_MENU_NAMCO_DSWB_7) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_6) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_5) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_4) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_3) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_2) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_1) &
-              main_osm_control_i(C_MENU_NAMCO_DSWB_0);   
-   
-            
    ---------------------------------------------------------------------------------------------
    -- main_clk (MiSTer core's clock)
    ---------------------------------------------------------------------------------------------
@@ -423,10 +329,16 @@ begin
                video_ce_ovl_o <= '1'; -- 24 MHz
             end if;
             
+            if dim_video = '1' then
+                video_red   <= "0" & main_video_red   & main_video_red   & main_video_red(2 downto 2);
+                video_green <= "0" & main_video_green & main_video_green & main_video_green(2 downto 2);
+                video_blue  <= "0" & main_video_blue  & main_video_blue  & main_video_blue & main_video_blue(1 downto 1);
+            else
             
-            video_red   <= main_video_red   & main_video_red   & main_video_red(2 downto 1);
-            video_green <= main_video_green & main_video_green & main_video_green(2 downto 1);
-            video_blue  <= main_video_blue  & main_video_blue  & main_video_blue & main_video_blue;
+                video_red   <= main_video_red   & main_video_red   & main_video_red(2 downto 1);
+                video_green <= main_video_green & main_video_green & main_video_green(2 downto 1);
+                video_blue  <= main_video_blue  & main_video_blue  & main_video_blue & main_video_blue;
+            end if;
             
             video_vblank_o   <= main_video_vblank;
             video_hblank_o   <= main_video_hblank;
